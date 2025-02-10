@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GitHub Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        /* Fullscreen Mode */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Rotate Screen Message */
+        #rotate-message {
+            display: none;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Main Selection Screen */
+        #main-content {
+            text-align: center;
+            color: white;
+        }
+
+        #select-file {
+            background: green;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            display: none;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Video Container */
+        #video-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: black;
+        }
+
+        /* Video Fullscreen */
+        #game-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+        }
+
+        /* Gamepad Overlay (Smaller Size) */
+        #gamepad-overlay {
+            position: absolute;
+            width: 50%; /* Adjust size */
+            height: auto;
+            bottom: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.8;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Rotate Screen Message -->
+    <div id="rotate-message">Please rotate your device to landscape mode.</div>
+
+    <!-- Main Selection Screen -->
+    <div id="main-content">
+        <h2>[Non File Elected]</h2>
+        <button id="select-file">Select</button>
+        <input type="file" id="file-input" accept=".opt" hidden>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">Loading... Getting Space</div>
+
+    <!-- Video Container -->
+    <div id="video-container">
+        <video id="game-video"></video>
+        <img id="gamepad-overlay" src="https://i.postimg.cc/gcHY9hXL/In-Shot-20250210-180806101.png" alt="Gamepad">
+    </div>
+
+    <script>
+        // Check screen orientation
+        function checkOrientation() {
+            if (window.innerHeight > window.innerWidth) {
+                document.getElementById("rotate-message").style.display = "block";
+                document.getElementById("main-content").style.display = "none";
+            } else {
+                document.getElementById("rotate-message").style.display = "none";
+                document.getElementById("main-content").style.display = "block";
+            }
+        }
+
+        // Run check on load and when resized
+        window.addEventListener("load", checkOrientation);
+        window.addEventListener("resize", checkOrientation);
+
+        // File selection
+        document.getElementById("select-file").addEventListener("click", function() {
+            document.getElementById("file-input").click();
+        });
+
+        document.getElementById("file-input").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+
+            if (file) {
+                document.getElementById("main-content").style.display = "none";
+                document.getElementById("loading-screen").style.display = "block";
+
+                setTimeout(() => {
+                    document.getElementById("loading-screen").style.display = "none";
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const videoBlob = new Blob([e.target.result], { type: "video/mp4" });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        
+                        startVideo(videoUrl);
+                    };
+                    reader.readAsArrayBuffer(file);
+                }, 15000); // Wait 15 seconds
+            }
+        });
+
+        // Enter fullscreen mode
+        function enterFullscreen() {
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        // Play video in full screen without controls
+        function startVideo(videoUrl) {
+            enterFullscreen();
+
+            document.getElementById("video-container").style.display = "block";
+
+            const video = document.getElementById("game-video");
+            video.src = videoUrl;
+            video.autoplay = true;
+            video.muted = false;
+            video.playsInline = true;
+            video.controls = false; // Remove all controls
+
+            // Start video playback
+            video.play().catch(error => console.log("Autoplay blocked", error));
+
+            // Fake error popup after video ends
+            video.onended = function() {
+                alert("Your device settings aren't allowing the website to use storage more than 128MB, so this game can't be played.");
+                document.getElementById("video-container").style.display = "none";
+                document.getElementById("main-content").style.display = "block";
+            };
+        }
+    </script>
+
+</body>
+</html>
